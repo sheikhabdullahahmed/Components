@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
-import { io, Socket } from 'socket.io-client';
-import './App.css';
+import { useState, useEffect, useRef } from "react";
+import { io, Socket } from "socket.io-client";
+import "./App.css";
 
 interface MessageLog {
   id: string;
-  type: 'sent' | 'received' | 'system';
+  type: "sent" | "received" | "system";
   event: string;
   senderId?: string;
   content: string;
@@ -12,12 +12,14 @@ interface MessageLog {
 }
 
 export default function App() {
-  const [serverUrl, setServerUrl] = useState<string>('http://localhost:5000');
+  const [serverUrl, setServerUrl] = useState<string>("http://localhost:5000");
   const [isConnected, setIsConnected] = useState<boolean>(false);
-  const [socketId, setSocketId] = useState<string>('');
-  const [welcomeMessage, setWelcomeMessage] = useState<string>('');
-  const [eventType, setEventType] = useState<'send_message' | 'message'>('send_message');
-  const [messageInput, setMessageInput] = useState<string>('');
+  const [socketId, setSocketId] = useState<string>("");
+  const [welcomeMessage, setWelcomeMessage] = useState<string>("");
+  const [eventType, setEventType] = useState<"send_message" | "message">(
+    "send_message",
+  );
+  const [messageInput, setMessageInput] = useState<string>("");
   const [logs, setLogs] = useState<MessageLog[]>([]);
   const [pingMs, setPingMs] = useState<number | null>(null);
 
@@ -27,7 +29,7 @@ export default function App() {
 
   // Scroll to bottom when logs update
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   useEffect(() => {
@@ -39,84 +41,100 @@ export default function App() {
     if (socketRef.current?.connected) return;
 
     const newSocket = io(serverUrl, {
-      transports: ['websocket', 'polling'],
+      transports: ["websocket", "polling"],
       autoConnect: true,
     });
 
     socketRef.current = newSocket;
 
-    newSocket.on('connect', () => {
+    newSocket.on("connect", () => {
       setIsConnected(true);
-      setSocketId(newSocket.id || '');
+      setSocketId(newSocket.id || "");
       addLog({
-        type: 'system',
-        event: 'connect',
+        type: "system",
+        event: "connect",
         content: `Connected to server with ID: ${newSocket.id}`,
       });
     });
 
-    newSocket.on('disconnect', (reason) => {
+    newSocket.on("disconnect", (reason) => {
       setIsConnected(false);
-      setSocketId('');
-      setWelcomeMessage('');
+      setSocketId("");
+      setWelcomeMessage("");
       addLog({
-        type: 'system',
-        event: 'disconnect',
+        type: "system",
+        event: "disconnect",
         content: `Disconnected from server (${reason})`,
       });
     });
 
-    newSocket.on('connect_error', (err) => {
+    newSocket.on("connect_error", (err) => {
       setIsConnected(false);
       addLog({
-        type: 'system',
-        event: 'error',
+        type: "system",
+        event: "error",
         content: `Connection Error: ${err.message}`,
       });
     });
 
     // Welcome event from backend server.js
-    newSocket.on('welcome', (data: { message: string; socketId: string }) => {
+    newSocket.on("welcome", (data: { message: string; socketId: string }) => {
       setWelcomeMessage(data.message);
       addLog({
-        type: 'system',
-        event: 'welcome',
+        type: "system",
+        event: "welcome",
         content: `🎉 ${data.message} (Socket ID: ${data.socketId})`,
       });
     });
 
     // Event broadcast from 'send_message'
-    newSocket.on('receive_message', (payload: { senderId: string; data: any; timestamp: string }) => {
-      if (pingStartRef.current) {
-        setPingMs(Date.now() - pingStartRef.current);
-        pingStartRef.current = null;
-      }
+    newSocket.on(
+      "receive_message",
+      (payload: { senderId: string; data: any; timestamp: string }) => {
+        if (pingStartRef.current) {
+          setPingMs(Date.now() - pingStartRef.current);
+          pingStartRef.current = null;
+        }
 
-      const isSelf = payload.senderId === newSocket.id;
-      const text = typeof payload.data === 'object' ? JSON.stringify(payload.data) : String(payload.data);
+        const isSelf = payload.senderId === newSocket.id;
+        const text =
+          typeof payload.data === "object"
+            ? JSON.stringify(payload.data)
+            : String(payload.data);
 
-      addLog({
-        type: isSelf ? 'sent' : 'received',
-        event: 'receive_message',
-        senderId: payload.senderId,
-        content: text,
-        timestamp: payload.timestamp ? new Date(payload.timestamp).toLocaleTimeString() : new Date().toLocaleTimeString(),
-      });
-    });
+        addLog({
+          type: isSelf ? "sent" : "received",
+          event: "receive_message",
+          senderId: payload.senderId,
+          content: text,
+          timestamp: payload.timestamp
+            ? new Date(payload.timestamp).toLocaleTimeString()
+            : new Date().toLocaleTimeString(),
+        });
+      },
+    );
 
     // Generic 'message' event broadcast
-    newSocket.on('message', (payload: { senderId: string; content: any; timestamp: string }) => {
-      const isSelf = payload.senderId === newSocket.id;
-      const text = typeof payload.content === 'object' ? JSON.stringify(payload.content) : String(payload.content);
+    newSocket.on(
+      "message",
+      (payload: { senderId: string; content: any; timestamp: string }) => {
+        const isSelf = payload.senderId === newSocket.id;
+        const text =
+          typeof payload.content === "object"
+            ? JSON.stringify(payload.content)
+            : String(payload.content);
 
-      addLog({
-        type: isSelf ? 'sent' : 'received',
-        event: 'message',
-        senderId: payload.senderId,
-        content: text,
-        timestamp: payload.timestamp ? new Date(payload.timestamp).toLocaleTimeString() : new Date().toLocaleTimeString(),
-      });
-    });
+        addLog({
+          type: isSelf ? "sent" : "received",
+          event: "message",
+          senderId: payload.senderId,
+          content: text,
+          timestamp: payload.timestamp
+            ? new Date(payload.timestamp).toLocaleTimeString()
+            : new Date().toLocaleTimeString(),
+        });
+      },
+    );
   };
 
   // Disconnect Socket
@@ -138,7 +156,9 @@ export default function App() {
     };
   }, []);
 
-  const addLog = (log: Omit<MessageLog, 'id' | 'timestamp'> & { timestamp?: string }) => {
+  const addLog = (
+    log: Omit<MessageLog, "id" | "timestamp"> & { timestamp?: string },
+  ) => {
     setLogs((prev) => [
       ...prev,
       {
@@ -154,20 +174,20 @@ export default function App() {
     e.preventDefault();
     if (!messageInput.trim() || !socketRef.current || !isConnected) return;
 
-    if (eventType === 'send_message') {
-      socketRef.current.emit('send_message', messageInput);
+    if (eventType === "send_message") {
+      socketRef.current.emit("send_message", messageInput);
     } else {
-      socketRef.current.emit('message', messageInput);
+      socketRef.current.emit("message", messageInput);
     }
 
-    setMessageInput('');
+    setMessageInput("");
   };
 
   // Send Ping Test
   const handleSendPing = () => {
     if (!socketRef.current || !isConnected) return;
     pingStartRef.current = Date.now();
-    socketRef.current.emit('send_message', '⚡ Ping test from client');
+    socketRef.current.emit("send_message", "⚡ Ping test from client");
   };
 
   // Clear log history
@@ -187,9 +207,11 @@ export default function App() {
           </div>
         </div>
 
-        <div className={`status-badge ${isConnected ? 'connected' : 'disconnected'}`}>
+        <div
+          className={`status-badge ${isConnected ? "connected" : "disconnected"}`}
+        >
           <span className="pulse-dot"></span>
-          <span>{isConnected ? 'ONLINE' : 'OFFLINE'}</span>
+          <span>{isConnected ? "ONLINE" : "OFFLINE"}</span>
         </div>
       </header>
 
@@ -221,20 +243,23 @@ export default function App() {
           </button>
         )}
 
-        <button 
-          className="btn btn-secondary" 
-          onClick={handleSendPing} 
+        <button
+          className="btn btn-secondary"
+          onClick={handleSendPing}
           disabled={!isConnected}
           title="Measure round-trip latency"
         >
-          ⚡ Ping {pingMs !== null && <span style={{ color: '#06b6d4' }}>({pingMs}ms)</span>}
+          ⚡ Ping{" "}
+          {pingMs !== null && (
+            <span style={{ color: "#06b6d4" }}>({pingMs}ms)</span>
+          )}
         </button>
       </div>
 
       {/* Welcome Banner */}
       {isConnected && welcomeMessage && (
         <div className="welcome-banner">
-          <span style={{ fontSize: '1.2rem' }}>💬</span>
+          <span style={{ fontSize: "1.2rem" }}>💬</span>
           <span>{welcomeMessage}</span>
         </div>
       )}
@@ -242,11 +267,13 @@ export default function App() {
       {/* Main Messages & Logs Display */}
       <main className="main-content">
         <div className="messages-header">
-          <span className="messages-title">Live Message Stream ({logs.length})</span>
-          <button 
-            className="btn btn-secondary" 
+          <span className="messages-title">
+            Live Message Stream ({logs.length})
+          </span>
+          <button
+            className="btn btn-secondary"
             onClick={handleClearLogs}
-            style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem' }}
+            style={{ padding: "0.25rem 0.6rem", fontSize: "0.75rem" }}
           >
             Clear Stream
           </button>
@@ -256,17 +283,24 @@ export default function App() {
           {logs.length === 0 ? (
             <div className="empty-state">
               <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 8 9 8z" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 8 9 8z"
+                />
               </svg>
               <p>No messages yet. Send a message to get started!</p>
             </div>
           ) : (
             logs.map((log) => (
               <div key={log.id} className={`message-card ${log.type}`}>
-                {log.type !== 'system' && (
+                {log.type !== "system" && (
                   <div className="message-meta">
                     <span className="sender-tag">
-                      {log.type === 'sent' ? 'You' : `User (${log.senderId?.substring(0, 6)})`}
+                      {log.type === "sent"
+                        ? "You"
+                        : `User (${log.senderId?.substring(0, 6)})`}
                     </span>
                     <span className="event-badge">{log.event}</span>
                     <span className="time-stamp">{log.timestamp}</span>
@@ -283,7 +317,7 @@ export default function App() {
       {/* Input Footer */}
       <footer className="app-footer">
         <form className="send-form" onSubmit={handleSendMessage}>
-          <select 
+          <select
             className="event-select"
             value={eventType}
             onChange={(e) => setEventType(e.target.value as any)}
@@ -296,15 +330,19 @@ export default function App() {
           <input
             type="text"
             className="message-input"
-            placeholder={isConnected ? "Type a message..." : "Connect to server to send messages"}
+            placeholder={
+              isConnected
+                ? "Type a message..."
+                : "Connect to server to send messages"
+            }
             value={messageInput}
             onChange={(e) => setMessageInput(e.target.value)}
             disabled={!isConnected}
           />
 
-          <button 
-            type="submit" 
-            className="btn btn-primary" 
+          <button
+            type="submit"
+            className="btn btn-primary"
             disabled={!isConnected || !messageInput.trim()}
           >
             Send 🚀
