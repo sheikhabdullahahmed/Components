@@ -1,13 +1,23 @@
-import mongoose from 'mongoose';
+import pkg from '@prisma/client';
+const { PrismaClient } = pkg;
+import { PrismaPg } from '@prisma/adapter-pg';
+import pg from 'pg';
 import 'colors';
+
+const connectionString = process.env.DATABASE_URL;
+
+const pool = new pg.Pool({ connectionString });
+const adapter = new PrismaPg(pool);
+
+export const prisma = new PrismaClient({ adapter });
 
 const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(process.env.MONGO_URI);
-    console.log(`MongoDB Connected: ${conn.connection.host}`.cyan.underline);
+    await pool.query('SELECT 1');
+    console.log(`PostgreSQL Connected successfully via Prisma`.cyan.underline);
   } catch (error) {
-    console.error(`MongoDB Connection Error: ${error.message}`.red.bold);
-    process.exit(1);
+    console.error(`PostgreSQL Connection Error: ${error.message}`.red.bold);
+    console.log(`Please make sure your PostgreSQL database is running and DATABASE_URL in .env is correct.`.yellow);
   }
 };
 

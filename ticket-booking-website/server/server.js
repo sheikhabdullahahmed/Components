@@ -3,8 +3,8 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import 'colors';
 import connectDB from './config/db.js';
-import userRoutes from './routes/userRoutes.js';
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
+import { auth } from './utils/auth.js';
 
 // Load environment variables
 dotenv.config();
@@ -20,18 +20,18 @@ app.use(express.json());
 // Enable Cross-Origin Resource Sharing (CORS)
 app.use(cors());
 
+// Better-Auth handler route
+app.all('/api/auth/*', (req, res) => {
+  return auth.handler(req, res);
+});
+
 // Root route for sanity checks
 app.get('/', (req, res) => {
   res.json({
     success: true,
     message: 'Welcome to the Express Backend API',
-    status: 'Running',
-    timestamp: new Date()
   });
 });
-
-// Mount routes
-app.use('/api/users', userRoutes);
 
 // Catch-all middleware for 404 routes
 app.use(notFound);

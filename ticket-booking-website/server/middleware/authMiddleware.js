@@ -1,35 +1,23 @@
-import jwt from 'jsonwebtoken';
-import User from '../models/userModel.js';
+import { auth } from '../utils/auth.js';
 
-// Protect routes - Verify JWT Token
+// Protect routes - Verify Better Auth Session
 export const protect = async (req, res, next) => {
-  let token;
+  try {
+    const session = await auth.api.getSession({
+      headers: req.headers,
+    });
 
-  // Check for token in Authorization header (Bearer token)
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith('Bearer')
-  ) {
-    try {
-      // Extract token
-      token = req.headers.authorization.split(' ')[1];
-
-      // Verify token
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-      // Get user details from database and attach to request object
-      req.user = await User.findById(decoded.id).select('-password');
-
-      next();
-    } catch (error) {
+    if (!session || !session.user) {
       res.status(401);
-      next(new Error('Not authorized, token failed'));
+      return next(new Error('Not authorized, no session found'));
     }
-  }
 
-  if (!token) {
+    req.user = session.user;
+    req.session = session.session;
+    next();
+  } catch (error) {
     res.status(401);
-    next(new Error('Not authorized, no token provided'));
+    next(new Error('Not authorized, session validation failed'));
   }
 };
 
