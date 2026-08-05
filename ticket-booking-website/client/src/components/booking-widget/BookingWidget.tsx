@@ -245,7 +245,7 @@ export function BookingWidget() {
           </Button>
 
           <div className="relative">
-            <span className="absolute -top-3.5 right-6 bg-[#FF6B00] text-white text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider animate-bounce shadow-md">
+            <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#FF6B00] text-white text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider animate-bounce shadow-md z-10">
               New
             </span>
             <Button

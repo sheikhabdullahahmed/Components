@@ -1,29 +1,28 @@
+import 'dotenv/config';
 import express from 'express';
-import dotenv from 'dotenv';
 import cors from 'cors';
 import 'colors';
 import connectDB from './config/db.js';
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
+import { toNodeHandler } from 'better-auth/node';
 import { auth } from './utils/auth.js';
 
-// Load environment variables
-dotenv.config();
-
-// Connect to MongoDB
+// Connect to PostgreSQL
 connectDB();
 
 const app = express();
 
-// Body Parser Middleware to read JSON
-app.use(express.json());
-
 // Enable Cross-Origin Resource Sharing (CORS)
-app.use(cors());
+app.use(cors({
+  origin: process.env.CLIENT_URL || 'http://localhost:3000',
+  credentials: true
+}));
 
 // Better-Auth handler route
-app.all('/api/auth/*', (req, res) => {
-  return auth.handler(req, res);
-});
+app.all('/api/auth/*', toNodeHandler(auth));
+
+// Body Parser Middleware to read JSON
+app.use(express.json());
 
 // Root route for sanity checks
 app.get('/', (req, res) => {
@@ -40,7 +39,7 @@ app.use(notFound);
 app.use(errorHandler);
 
 // Port setup
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 app.listen(
   PORT,

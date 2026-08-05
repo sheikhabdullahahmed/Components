@@ -1,6 +1,7 @@
 import React from "react";
 import { Navbar } from "@/components/navbar";
-import { BookingWidget } from "./components/booking-widget/BookingWidget";
+import { BookingWidget } from "./components/booking-widget/bookingwidget";
+import { useGetSessionQuery } from "./store/services/authApi";
 
 // SVG Cloud Component for natural layered background
 const VectorCloud = ({
@@ -204,6 +205,9 @@ const GreenMascot = ({ className }: { className?: string }) => (
 );
 
 function App() {
+  // Automatically restore active session from backend on page load / refresh
+  useGetSessionQuery();
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0A84FF] via-[#0BA3FF] to-[#38BDF8] text-slate-800 flex flex-col font-sans antialiased overflow-x-hidden">
       {/* Premium Navbar */}
@@ -242,7 +246,7 @@ function App() {
           <div className="absolute right-[20%] top-[8%] w-24 h-10 bg-white/20 rounded-full blur-[3px] pointer-events-none"></div>
 
           {/* Green Mascot Character (matches screenshot right) */}
-          <GreenMascot className="absolute right-[2%] top-[6%] w-24 md:w-32 lg:w-40 drop-shadow-xl hover:scale-105 transition-transform duration-300" />
+          <GreenMascot className="absolute right-[2%] top-[6%] w-24 md:w-32 lg:w-40 drop-shadow-xl hover:scale-105 transition-transform duration-300 cursor-pointer" />
         </div>
 
         {/* Dynamic Booking Search Widget (Centered) */}
