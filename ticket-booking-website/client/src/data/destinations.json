@@ -1,0 +1,50 @@
+[
+  {
+    "id": "islamabad",
+    "city": "Islamabad",
+    "country": "Pakistan",
+    "subtitle": "Round-trip flights from",
+    "price": "PKR 43,427",
+    "image": "/src/assets/destinations/islamabad.png"
+  },
+  {
+    "id": "dammam",
+    "city": "Dammam",
+    "country": "Saudi Arabia",
+    "subtitle": "Round-trip flights from",
+    "price": "PKR 87,492",
+    "image": "/src/assets/destinations/dammam.png"
+  },
+  {
+    "id": "muscat",
+    "city": "Muscat",
+    "country": "Oman",
+    "subtitle": "Round-trip flights from",
+    "price": "PKR 65,316",
+    "image": "/src/assets/destinations/muscat.png"
+  },
+  {
+    "id": "lahore",
+    "city": "Lahore",
+    "country": "Pakistan",
+    "subtitle": "Round-trip flights from",
+    "price": "PKR 32,474",
+    "image": "/src/assets/destinations/lahore.png"
+  },
+  {
+    "id": "dubai",
+    "city": "Dubai",
+    "country": "UAE",
+    "subtitle": "Round-trip flights from",
+    "price": "PKR 54,200",
+    "image": "/src/assets/destinations/dubai.png"
+  },
+  {
+    "id": "karachi",
+    "city": "Karachi",
+    "country": "Pakistan",
+    "subtitle": "Round-trip flights from",
+    "price": "PKR 28,990",
+    "image": "/src/assets/destinations/karachi.png"
+  }
+]

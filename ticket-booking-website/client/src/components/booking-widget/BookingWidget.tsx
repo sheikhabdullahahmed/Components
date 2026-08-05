@@ -516,7 +516,7 @@ export function BookingWidget() {
 
               <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">To</label>
               <div className={`text-base font-bold select-none ${to ? "text-slate-800" : "text-slate-400 font-normal"}`}>
-                {to }
+                {to}
               </div>
 
               {activeDropdown?.type === "to" && (
@@ -694,7 +694,7 @@ export function BookingWidget() {
 
                     <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">To</label>
                     <div className={`text-base font-bold select-none ${segment.to ? "text-slate-800" : "text-slate-400 font-normal"}`}>
-                      {segment.to }
+                      {segment.to}
                     </div>
 
                     {activeDropdown?.type === "to" && activeDropdown?.index === index && (
