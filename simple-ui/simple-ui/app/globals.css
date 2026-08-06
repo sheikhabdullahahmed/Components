@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+:root {
+  --background: #080808;
+  --foreground: #ffffff;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-geist: "Geist", var(--font-geist-sans), system-ui, sans-serif;
+  --font-geist-mono: "Geist Mono", var(--font-geist-mono), monospace;
+}
+
+@keyframes reveal-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-reveal {
+  opacity: 0;
+  animation: reveal-up 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    animation: none !important;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist), "Geist", system-ui, sans-serif;
+}

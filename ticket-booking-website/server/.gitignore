@@ -12,3 +12,8 @@ dist/
 build/
 
 /generated/prisma
+
+# AI tool configurations
+.agents/
+.claude/
+.windsurf/

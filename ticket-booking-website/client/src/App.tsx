@@ -9,15 +9,6 @@ function App() {
   // Restore active user session from backend on page load / refresh
   useGetSessionQuery();
 
-  const handleOpenAuthModal = (mode: "signin" | "signup") => {
-    // Auth modal is handled inside Navbar state or can be triggered via global modal events
-    const loginButton = document.querySelector<HTMLButtonElement>(
-      'button:has-text("Sign In"), button:has-text("Sign Up"), button:has-text("Login")'
-    );
-    if (loginButton) {
-      loginButton.click();
-    }
-  };
 
   return (
     <div className="min-h-screen bg-white text-slate-800 flex flex-col font-sans antialiased overflow-x-hidden selection:bg-blue-500 selection:text-white">

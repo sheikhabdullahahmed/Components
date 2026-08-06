@@ -4,6 +4,7 @@ import Logo from "@/assets/navbar/logo.png";
 import { Button } from "@/components/ui/button";
 import { AuthModal } from "@/components/auth/authmodal";
 import { useAppSelector } from "@/store/hook";
+import type { RootState } from "@/store";
 import { useSignOutMutation } from "@/store/services/authApi";
 
 interface NavbarProps {
@@ -20,7 +21,7 @@ export function Navbar({ sticky = true }: NavbarProps) {
 
   const userMenuRef = useRef<HTMLDivElement>(null);
 
-  const { user, isAuthenticated } = useAppSelector((state) => state.auth);
+  const { user, isAuthenticated } = useAppSelector((state: RootState) => state.auth);
   const [signOut] = useSignOutMutation();
 
   const handleOpenAuth = (mode: "signin" | "signup") => {
