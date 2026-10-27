@@ -1,0 +1,28 @@
+@import 'tailwindcss';
+
+/* Design tokens from the Figma file. "Okta Neue" is a paid font,
+   so Inter is used when it is not installed. */
+@theme {
+  --font-okta: 'Okta Neue', 'Inter', sans-serif;
+  --font-montserrat: 'Montserrat', sans-serif;
+  --font-poppins: 'Poppins', sans-serif;
+  --font-haas: 'Neue Haas Grotesk Display Pro', 'Inter', sans-serif;
+
+  --color-primary: #4735fd;
+  --color-primary-border: #2c219e;
+  --color-page: #f6f6f6;
+  --color-text: #333333;
+  --color-line: #e0e0e0;
+  --color-muted: #635959;
+  --color-table-head: #f3f3f3;
+  --color-chip: #f1f3f4;
+  --color-chip-border: #aeb9be;
+  --color-chip-text: #4f4f4f;
+}
+
+body {
+  margin: 0;
+  background: var(--color-page);
+  font-family: var(--font-okta);
+  color: var(--color-text);
+}
