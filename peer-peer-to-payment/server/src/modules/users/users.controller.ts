@@ -8,20 +8,17 @@ import {
   Param,
   ParseUUIDPipe,
   Patch,
-  Post,
+  UseGuards,
 } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto.js';
+import { AuthGuard } from '../../common/guards/auth.guard.js';
 import { UpdateUserDto } from './dto/update-user.dto.js';
 import { UsersService } from './users.service.js';
 
+// Users are created through POST /auth/signup.
 @Controller('users')
+@UseGuards(AuthGuard)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
-
-  @Post()
-  create(@Body() dto: CreateUserDto) {
-    return this.usersService.create(dto);
-  }
 
   @Get()
   findAll() {

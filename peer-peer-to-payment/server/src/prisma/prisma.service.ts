@@ -7,7 +7,8 @@ import { PrismaClient } from '../generated/prisma/client.js';
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   constructor(config: ConfigService) {
     const adapter = new PrismaPg({ connectionString: config.getOrThrow<string>('DATABASE_URL') });
-    super({ adapter });
+    // Never return the password hash unless a query explicitly opts in.
+    super({ adapter, omit: { user: { password: true } } });
   }
 
   async onModuleInit() {
