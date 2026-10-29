@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useLogin } from "../auth.hooks";
+import { PasswordInput } from "./password-input";
 import { fieldErrors, formError } from "./form-errors";
 
 const FIELDS = ["email", "password"];
@@ -45,10 +46,9 @@ export function LoginForm() {
 
         <Field data-invalid={passwordErrors.length > 0 || undefined}>
           <FieldLabel htmlFor="password">Password</FieldLabel>
-          <Input
+          <PasswordInput
             id="password"
             name="password"
-            type="password"
             autoComplete="current-password"
             required
             aria-invalid={passwordErrors.length > 0 || undefined}

@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useSignup } from "../auth.hooks";
+import { PasswordInput } from "./password-input";
 import { fieldErrors, formError } from "./form-errors";
 
 const FIELDS = ["name", "email", "password"];
@@ -70,10 +71,9 @@ export function SignupForm() {
 
         <Field data-invalid={errors.password.length > 0 || undefined}>
           <FieldLabel htmlFor="password">Password</FieldLabel>
-          <Input
+          <PasswordInput
             id="password"
             name="password"
-            type="password"
             autoComplete="new-password"
             required
             minLength={8}
