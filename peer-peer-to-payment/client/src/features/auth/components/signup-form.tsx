@@ -46,7 +46,7 @@ export function SignupForm() {
             id="name"
             name="name"
             autoComplete="name"
-            placeholder="Ayesha Khan"
+            placeholder="Enter Your Name"
             required
             minLength={2}
             maxLength={100}
@@ -76,6 +76,7 @@ export function SignupForm() {
             name="password"
             autoComplete="new-password"
             required
+            placeholder="Enter your password"
             minLength={8}
             maxLength={72}
             aria-invalid={errors.password.length > 0 || undefined}

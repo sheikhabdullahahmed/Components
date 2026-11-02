@@ -24,6 +24,18 @@ export class UsersService {
     return this.prisma.user.findUnique({ where: { email }, omit: { password: false } });
   }
 
+  // Matches by Google id first, then links an existing account with the same email.
+  async upsertGoogleUser({ googleId, email, name }: { googleId: string; email: string; name?: string }) {
+    const linked = await this.prisma.user.findUnique({ where: { googleId } });
+    if (linked) return linked;
+
+    return this.prisma.user.upsert({
+      where: { email },
+      update: { googleId },
+      create: { googleId, email, name },
+    });
+  }
+
   update(id: string, data: UpdateUserDto) {
     return this.prisma.user.update({ where: { id }, data });
   }

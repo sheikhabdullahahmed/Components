@@ -13,9 +13,137 @@ model User {
   id        String   @id @default(uuid())
   email     String   @unique
   name      String?
-  password  String
+  // Null for accounts that only sign in with Google.
+  password  String?
+  googleId  String?  @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  friendships   Friendship[]   @relation("UserFriendships")
+  friendOf      Friendship[]   @relation("FriendOfUser")
+  friendInvites FriendInvite[]
+  groupsCreated Group[]
+  memberships   GroupMember[]
+  expensesPaid    Expense[]      @relation("ExpensePaidBy")
+  expensesCreated Expense[]      @relation("ExpenseCreatedBy")
+  expenseSplits   ExpenseSplit[]
+  settlementsPaid     Settlement[] @relation("SettlementPayer")
+  settlementsReceived Settlement[] @relation("SettlementPayee")
+  settlementsCreated  Settlement[] @relation("SettlementCreatedBy")
+
   @@map("users")
+}
+
+// A repayment: `payer` gave `amount` paisa to `payee`, outside the app (cash, bank transfer...).
+model Settlement {
+  id          String   @id @default(uuid())
+  amount      Int
+  date        DateTime @default(now())
+  payerId     String
+  payeeId     String
+  createdById String
+  groupId     String?
+  createdAt   DateTime @default(now())
+
+  payer     User   @relation("SettlementPayer", fields: [payerId], references: [id], onDelete: Cascade)
+  payee     User   @relation("SettlementPayee", fields: [payeeId], references: [id], onDelete: Cascade)
+  createdBy User   @relation("SettlementCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+  group     Group? @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@index([payerId])
+  @@index([payeeId])
+  @@index([groupId])
+  @@map("settlements")
+}
+
+// Amounts are stored in paisa (1 PKR = 100) to avoid floating point errors.
+model Expense {
+  id          String   @id @default(uuid())
+  description String
+  amount      Int
+  date        DateTime @default(now())
+  paidById    String
+  createdById String
+  groupId     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  paidBy    User           @relation("ExpensePaidBy", fields: [paidById], references: [id], onDelete: Cascade)
+  createdBy User           @relation("ExpenseCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+  group     Group?         @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  splits    ExpenseSplit[]
+
+  @@index([groupId])
+  @@index([paidById])
+  @@map("expenses")
+}
+
+// What each participant owes for an expense, in paisa.
+model ExpenseSplit {
+  expenseId String
+  userId    String
+  amount    Int
+
+  expense Expense @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([expenseId, userId])
+  @@index([userId])
+  @@map("expense_splits")
+}
+
+model Group {
+  id          String   @id @default(uuid())
+  name        String
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdBy User          @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  members     GroupMember[]
+  expenses    Expense[]
+  settlements Settlement[]
+
+  @@map("groups")
+}
+
+model GroupMember {
+  groupId  String
+  userId   String
+  joinedAt DateTime @default(now())
+
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([groupId, userId])
+  @@index([userId])
+  @@map("group_members")
+}
+
+// Stored in both directions (A->B and B->A) so "my friends" is a single lookup.
+model Friendship {
+  id        String   @id @default(uuid())
+  userId    String
+  friendId  String
+  createdAt DateTime @default(now())
+
+  user   User @relation("UserFriendships", fields: [userId], references: [id], onDelete: Cascade)
+  friend User @relation("FriendOfUser", fields: [friendId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, friendId])
+  @@map("friendships")
+}
+
+// An email that isn't signed up yet; turns into a Friendship when that email signs up.
+model FriendInvite {
+  id          String   @id @default(uuid())
+  email       String
+  invitedById String
+  createdAt   DateTime @default(now())
+
+  invitedBy User @relation(fields: [invitedById], references: [id], onDelete: Cascade)
+
+  @@unique([invitedById, email])
+  @@index([email])
+  @@map("friend_invites")
 }
