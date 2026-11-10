@@ -47,7 +47,7 @@ export function useSignup() {
   });
 }
 
-export function useLogout() {
+export function useLogout(redirectTo = "/login") {
   const queryClient = useQueryClient();
   const router = useRouter();
 
@@ -56,7 +56,7 @@ export function useLogout() {
     onSuccess: () => {
       queryClient.setQueryData(authKeys.me, null);
       queryClient.removeQueries({ predicate: (q) => q.queryKey[0] !== "auth" });
-      router.replace("/login");
+      router.replace(redirectTo);
     },
     onError: () => toast.error("Could not log out, please try again"),
   });

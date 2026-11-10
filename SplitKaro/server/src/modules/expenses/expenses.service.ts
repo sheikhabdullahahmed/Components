@@ -1,7 +1,10 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { assertFriends, assertGroupMembers } from '../../common/access.js';
 import type { Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
+import type { UploadedImage } from '../storage/uploaded-file.js';
+import { StorageService } from '../storage/storage.service.js';
+import { CreateCommentDto } from './dto/create-comment.dto.js';
 import { CreateExpenseDto } from './dto/create-expense.dto.js';
 import { ListExpensesDto } from './dto/list-expenses.dto.js';
 
@@ -13,11 +16,20 @@ const EXPENSE_SELECT = {
   amount: true,
   date: true,
   createdAt: true,
+  receiptUrl: true,
+  _count: { select: { comments: true } },
   group: { select: { id: true, name: true } },
   paidBy: { select: USER_SELECT },
   createdBy: { select: USER_SELECT },
   splits: { select: { amount: true, user: { select: USER_SELECT } } },
 } satisfies Prisma.ExpenseSelect;
+
+const COMMENT_SELECT = {
+  id: true,
+  body: true,
+  createdAt: true,
+  user: { select: USER_SELECT },
+} satisfies Prisma.ExpenseCommentSelect;
 
 // Splits `total` paisa into `count` equal shares; leftover paisa go to the first shares.
 export function splitEqually(total: number, count: number) {
@@ -28,7 +40,10 @@ export function splitEqually(total: number, count: number) {
 
 @Injectable()
 export class ExpensesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly storage: StorageService,
+  ) {}
 
   async create(userId: string, dto: CreateExpenseDto) {
     const participantIds = [...new Set(dto.participantIds)];
@@ -94,7 +109,76 @@ export class ExpensesService {
 
   async remove(userId: string, id: string) {
     await this.findOne(userId, id);
-    await this.prisma.expense.delete({ where: { id } });
+    const expense = await this.prisma.expense.delete({ where: { id }, select: { receiptKey: true } });
+    await this.deleteStoredFile(expense.receiptKey);
+  }
+
+  async setReceipt(userId: string, id: string, file: UploadedImage | undefined) {
+    if (!file) throw new BadRequestException('Attach an image in the "file" field');
+    if (!file.mimetype.startsWith('image/')) {
+      throw new BadRequestException('The receipt must be an image');
+    }
+    await this.findOne(userId, id);
+
+    const { url, key } = await this.storage.upload(file.buffer, 'splitkaro/receipts');
+    const old = await this.prisma.expense.findUniqueOrThrow({
+      where: { id },
+      select: { receiptKey: true },
+    });
+    const expense = await this.prisma.expense.update({
+      where: { id },
+      data: { receiptUrl: url, receiptKey: key },
+      select: EXPENSE_SELECT,
+    });
+    await this.deleteStoredFile(old.receiptKey);
+    return expense;
+  }
+
+  async removeReceipt(userId: string, id: string) {
+    await this.findOne(userId, id);
+    const old = await this.prisma.expense.findUniqueOrThrow({
+      where: { id },
+      select: { receiptKey: true },
+    });
+    await this.prisma.expense.update({
+      where: { id },
+      data: { receiptUrl: null, receiptKey: null },
+    });
+    await this.deleteStoredFile(old.receiptKey);
+  }
+
+  async listComments(userId: string, expenseId: string) {
+    await this.findOne(userId, expenseId);
+    return this.prisma.expenseComment.findMany({
+      where: { expenseId },
+      select: COMMENT_SELECT,
+      orderBy: { createdAt: 'asc' },
+    });
+  }
+
+  async addComment(userId: string, expenseId: string, dto: CreateCommentDto) {
+    await this.findOne(userId, expenseId);
+    return this.prisma.expenseComment.create({
+      data: { expenseId, userId, body: dto.body.trim() },
+      select: COMMENT_SELECT,
+    });
+  }
+
+  async removeComment(userId: string, expenseId: string, commentId: string) {
+    await this.findOne(userId, expenseId);
+    const comment = await this.prisma.expenseComment.findFirst({
+      where: { id: commentId, expenseId },
+      select: { userId: true },
+    });
+    if (!comment) throw new NotFoundException('Comment not found');
+    if (comment.userId !== userId) throw new ForbiddenException('You can only delete your own comments');
+    await this.prisma.expenseComment.delete({ where: { id: commentId } });
+  }
+
+  // A leftover file is harmless, so a storage failure must not fail the request.
+  private async deleteStoredFile(key: string | null) {
+    if (!key) return;
+    await this.storage.delete(key).catch(() => undefined);
   }
 
   private involves(userId: string): Prisma.ExpenseWhereInput {

@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import { Loader2Icon, LogOutIcon, PencilIcon, Trash2Icon, UserPlusIcon, XIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useConfirm } from "@/components/shared/confirm-provider";
 import { useMe } from "@/features/auth/auth.hooks";
 import { useBalances } from "@/features/balances/balances.hooks";
 import { BalanceLabel } from "@/features/balances/components/balance-label";
@@ -29,6 +30,7 @@ export default function GroupPage() {
   const removeMember = useRemoveGroupMember(id);
   const leave = useLeaveGroup(id, me?.id ?? "");
   const deleteGroup = useDeleteGroup(id);
+  const confirm = useConfirm();
 
   if (group.isPending) {
     return (
@@ -118,10 +120,15 @@ export default function GroupPage() {
                     className="ml-auto"
                     aria-label={`Remove ${member.name ?? member.email}`}
                     disabled={removeMember.isPending}
-                    onClick={() => {
-                      if (window.confirm(`Remove ${member.name ?? member.email} from the group?`)) {
-                        removeMember.mutate(member.id);
-                      }
+                    onClick={async () => {
+                      const name = member.name ?? member.email;
+                      const ok = await confirm({
+                        title: `Remove ${name}?`,
+                        description: "They will no longer see this group.",
+                        confirmLabel: "Remove",
+                        destructive: true,
+                      });
+                      if (ok) removeMember.mutate(member.id);
                     }}
                   >
                     <XIcon />
@@ -137,7 +144,15 @@ export default function GroupPage() {
         <Button
           variant="outline"
           disabled={leave.isPending}
-          onClick={() => window.confirm("Leave this group?") && leave.mutate()}
+          onClick={async () => {
+            const ok = await confirm({
+              title: "Leave this group?",
+              description: "You will no longer see its expenses.",
+              confirmLabel: "Leave",
+              destructive: true,
+            });
+            if (ok) leave.mutate();
+          }}
         >
           <LogOutIcon />
           Leave group
@@ -146,9 +161,15 @@ export default function GroupPage() {
           <Button
             variant="destructive"
             disabled={deleteGroup.isPending}
-            onClick={() =>
-              window.confirm(`Delete "${data.name}" for everyone?`) && deleteGroup.mutate()
-            }
+            onClick={async () => {
+              const ok = await confirm({
+                title: `Delete "${data.name}"?`,
+                description: "The group and all its expenses are deleted for everyone.",
+                confirmLabel: "Delete group",
+                destructive: true,
+              });
+              if (ok) deleteGroup.mutate();
+            }}
           >
             <Trash2Icon />
             Delete group

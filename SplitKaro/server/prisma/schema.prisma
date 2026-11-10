@@ -27,6 +27,7 @@ model User {
   expensesPaid    Expense[]      @relation("ExpensePaidBy")
   expensesCreated Expense[]      @relation("ExpenseCreatedBy")
   expenseSplits   ExpenseSplit[]
+  expenseComments ExpenseComment[]
   settlementsPaid     Settlement[] @relation("SettlementPayer")
   settlementsReceived Settlement[] @relation("SettlementPayee")
   settlementsCreated  Settlement[] @relation("SettlementCreatedBy")
@@ -65,6 +66,9 @@ model Expense {
   paidById    String
   createdById String
   groupId     String?
+  // Receipt photo. `receiptKey` is the storage provider's id, used to delete the file.
+  receiptUrl  String?
+  receiptKey  String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -72,6 +76,7 @@ model Expense {
   createdBy User           @relation("ExpenseCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
   group     Group?         @relation(fields: [groupId], references: [id], onDelete: Cascade)
   splits    ExpenseSplit[]
+  comments  ExpenseComment[]
 
   @@index([groupId])
   @@index([paidById])
@@ -90,6 +95,20 @@ model ExpenseSplit {
   @@id([expenseId, userId])
   @@index([userId])
   @@map("expense_splits")
+}
+
+model ExpenseComment {
+  id        String   @id @default(uuid())
+  expenseId String
+  userId    String
+  body      String
+  createdAt DateTime @default(now())
+
+  expense Expense @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([expenseId])
+  @@map("expense_comments")
 }
 
 model Group {

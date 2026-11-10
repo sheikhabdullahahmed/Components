@@ -65,7 +65,7 @@ export default function LandingPage() {
         <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between px-4 sm:px-8">
           <Link href="/" className="flex items-center gap-2 text-sm font-semibold">
             <ArrowLeftRightIcon className="size-4" />
-            Peer to Peer Payment
+            SplitKaro
           </Link>
           <nav className="flex items-center gap-1 sm:gap-2">
             <a
@@ -236,7 +236,7 @@ export default function LandingPage() {
         <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-2 px-4 py-6 text-sm text-muted-foreground sm:flex-row sm:px-8">
           <p className="flex items-center gap-2">
             <ArrowLeftRightIcon className="size-4" />
-            Peer to Peer Payment
+            SplitKaro
           </p>
           <p>&copy; {new Date().getFullYear()} All rights reserved.</p>
         </div>

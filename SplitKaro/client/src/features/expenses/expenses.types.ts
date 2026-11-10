@@ -9,6 +9,8 @@ export type Expense = {
   amount: number;
   date: string;
   createdAt: string;
+  receiptUrl: string | null;
+  _count: { comments: number };
   group: { id: string; name: string } | null;
   paidBy: Person;
   createdBy: Person;
@@ -28,4 +30,11 @@ export type CreateExpenseInput = {
 export type ExpenseFilters = {
   groupId?: string;
   friendId?: string;
+};
+
+export type ExpenseComment = {
+  id: string;
+  body: string;
+  createdAt: string;
+  user: Person;
 };

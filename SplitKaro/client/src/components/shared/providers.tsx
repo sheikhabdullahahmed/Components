@@ -2,6 +2,7 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
+import { ConfirmProvider } from "./confirm-provider";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   // One client per browser session; useState keeps it stable across renders.
@@ -14,5 +15,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
       }),
   );
 
-  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ConfirmProvider>{children}</ConfirmProvider>
+    </QueryClientProvider>
+  );
 }

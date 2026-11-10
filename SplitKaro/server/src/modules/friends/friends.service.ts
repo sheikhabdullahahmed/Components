@@ -1,11 +1,15 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service.js';
+import { MailService } from '../mail/mail.service.js';
 
 const FRIEND_SELECT = { id: true, name: true, email: true } as const;
 
 @Injectable()
 export class FriendsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mail: MailService,
+  ) {}
 
   async list(userId: string) {
     const rows = await this.prisma.friendship.findMany({
@@ -33,16 +37,26 @@ export class FriendsService {
       throw new BadRequestException('You cannot add yourself as a friend');
     }
 
+    const adder = await this.prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+      select: { name: true, email: true },
+    });
+
     if (friend) {
-      await this.link(userId, friend.id);
+      const { count } = await this.link(userId, friend.id);
+      // Only email when the friendship is new, so re-adding doesn't spam them.
+      if (count > 0) void this.mail.sendFriendAdded(friend.email, adder);
       return { status: 'added' as const, friend };
     }
 
-    await this.prisma.friendInvite.upsert({
+    const existing = await this.prisma.friendInvite.findUnique({
       where: { invitedById_email: { invitedById: userId, email } },
-      update: {},
-      create: { invitedById: userId, email },
+      select: { id: true },
     });
+    if (!existing) {
+      await this.prisma.friendInvite.create({ data: { invitedById: userId, email } });
+      void this.mail.sendFriendInvite(email, adder);
+    }
     return { status: 'invited' as const, email };
   }
 

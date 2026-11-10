@@ -12,15 +12,15 @@ export class PrismaExceptionFilter implements ExceptionFilter {
       case 'P2002':
         return res
           .status(HttpStatus.CONFLICT)
-          .json({ statusCode: HttpStatus.CONFLICT, message: 'Record already exists' });
+          .json({ success: false, statusCode: HttpStatus.CONFLICT, message: 'Record already exists' });
       case 'P2025':
         return res
           .status(HttpStatus.NOT_FOUND)
-          .json({ statusCode: HttpStatus.NOT_FOUND, message: 'Record not found' });
+          .json({ success: false, statusCode: HttpStatus.NOT_FOUND, message: 'Record not found' });
       default:
         return res
           .status(HttpStatus.INTERNAL_SERVER_ERROR)
-          .json({ statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: 'Database error' });
+          .json({ success: false, statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: 'Database error' });
     }
   }
 }

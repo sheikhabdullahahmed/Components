@@ -1,6 +1,14 @@
 "use client";
 
-import { BanknoteIcon, Loader2Icon, ReceiptIcon, Trash2Icon } from "lucide-react";
+import {
+  BanknoteIcon,
+  Loader2Icon,
+  MessageSquareIcon,
+  PaperclipIcon,
+  ReceiptIcon,
+  Trash2Icon,
+} from "lucide-react";
+import { useConfirm } from "@/components/shared/confirm-provider";
 import { Button } from "@/components/ui/button";
 import { useMe } from "@/features/auth/auth.hooks";
 import { useDeleteSettlement, useSettlements } from "@/features/settlements/settlements.hooks";
@@ -9,6 +17,7 @@ import { formatPKR } from "@/lib/money";
 import { cn } from "@/lib/utils";
 import { useDeleteExpense, useExpenses } from "../expenses.hooks";
 import type { Expense, ExpenseFilters } from "../expenses.types";
+import { ExpenseDetailsDialog } from "./expense-details-dialog";
 
 const dateFormat = new Intl.DateTimeFormat("en-PK", { month: "short", day: "numeric" });
 
@@ -24,6 +33,7 @@ export function ExpenseList({
   const deleteExpense = useDeleteExpense();
   const deleteSettlement = useDeleteSettlement();
   const { data: me } = useMe();
+  const confirm = useConfirm();
 
   if (expenses.isPending || settlements.isPending) {
     return (
@@ -58,9 +68,15 @@ export function ExpenseList({
             settlement={item.data}
             nameOf={nameOf}
             deleting={deleteSettlement.isPending}
-            onDelete={() =>
-              window.confirm("Delete this payment?") && deleteSettlement.mutate(item.data.id)
-            }
+            onDelete={async () => {
+              const ok = await confirm({
+                title: "Delete this payment?",
+                description: "Balances will change as if it never happened.",
+                confirmLabel: "Delete",
+                destructive: true,
+              });
+              if (ok) deleteSettlement.mutate(item.data.id);
+            }}
           />
         ) : (
           <ExpenseRow
@@ -69,10 +85,15 @@ export function ExpenseList({
             meId={me?.id}
             nameOf={nameOf}
             deleting={deleteExpense.isPending}
-            onDelete={() =>
-              window.confirm(`Delete "${item.data.description}"?`) &&
-              deleteExpense.mutate(item.data.id)
-            }
+            onDelete={async () => {
+              const ok = await confirm({
+                title: `Delete "${item.data.description}"?`,
+                description: "Balances will change. This cannot be undone.",
+                confirmLabel: "Delete",
+                destructive: true,
+              });
+              if (ok) deleteExpense.mutate(item.data.id);
+            }}
           />
         ),
       )}
@@ -138,13 +159,33 @@ function ExpenseRow({
         <li className="group flex items-center gap-3 py-3">
       <DateCell date={expense.date} />
       <ReceiptIcon className="hidden size-5 shrink-0 text-muted-foreground sm:block" />
-      <div className="min-w-0 flex-1">
-        <p className="truncate font-medium">{expense.description}</p>
-        <p className="truncate text-xs text-muted-foreground">
-          {nameOf(expense.paidBy)} paid {formatPKR(expense.amount)}
-          {expense.group && ` · ${expense.group.name}`}
-        </p>
-      </div>
+      <ExpenseDetailsDialog
+        expense={expense}
+        trigger={
+          <button
+            type="button"
+            className="min-w-0 flex-1 cursor-pointer text-left"
+            aria-label={`Details for ${expense.description}`}
+          >
+            <p className="flex items-center gap-1.5 font-medium">
+              <span className="truncate">{expense.description}</span>
+              {expense.receiptUrl && (
+                <PaperclipIcon className="size-3.5 shrink-0 text-muted-foreground" />
+              )}
+              {expense._count.comments > 0 && (
+                <span className="flex shrink-0 items-center gap-0.5 text-xs text-muted-foreground">
+                  <MessageSquareIcon className="size-3.5" />
+                  {expense._count.comments}
+                </span>
+              )}
+            </p>
+            <p className="truncate text-xs text-muted-foreground">
+              {nameOf(expense.paidBy)} paid {formatPKR(expense.amount)}
+              {expense.group && ` · ${expense.group.name}`}
+            </p>
+          </button>
+        }
+      />
       <YourShare expense={expense} meId={meId} />
       <DeleteButton label={`Delete ${expense.description}`} {...rest} />
     </li>

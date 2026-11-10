@@ -12,16 +12,15 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 
         <div className="max-w-md space-y-4">
           <p className="text-4xl leading-tight font-semibold tracking-tight">
-            Split the bill. Pay a friend back. Done in seconds.
+            Welcome back. Your shared expenses are right where you left them.
           </p>
           <p className="text-primary-foreground/70">
-            Send and receive money directly with the people you know, without fees or waiting.
+            Log in to see who owes you, settle up with a friend, or add a new expense.
           </p>
         </div>
 
-        <p className="text-xs text-primary-foreground/50">
-          Secured with encrypted, httpOnly sessions.
-        </p>
+        {/* Keeps the tagline vertically centered between the logo and the bottom edge. */}
+        <div aria-hidden />
       </aside>
 
       <main className="flex items-center justify-center px-4 py-12 sm:px-8">

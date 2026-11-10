@@ -44,3 +44,64 @@ export function useDeleteExpense() {
       toast.error(error instanceof ApiError ? error.message : "Could not delete the expense"),
   });
 }
+
+const commentKeys = (expenseId: string) => ["expense-comments", expenseId] as const;
+
+const errorToast = (fallback: string) => (error: unknown) =>
+  toast.error(error instanceof ApiError ? error.message : fallback);
+
+export function useExpenseComments(expenseId: string, enabled = true) {
+  return useQuery({
+    queryKey: commentKeys(expenseId),
+    queryFn: () => expensesApi.comments(expenseId),
+    enabled,
+  });
+}
+
+export function useAddComment(expenseId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: string) => expensesApi.addComment(expenseId, body),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: commentKeys(expenseId) });
+      queryClient.invalidateQueries({ queryKey: expenseKeys.all });
+    },
+    onError: errorToast("Could not post the comment"),
+  });
+}
+
+export function useDeleteComment(expenseId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (commentId: string) => expensesApi.removeComment(expenseId, commentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: commentKeys(expenseId) });
+      queryClient.invalidateQueries({ queryKey: expenseKeys.all });
+    },
+    onError: errorToast("Could not delete the comment"),
+  });
+}
+
+export function useUploadReceipt(expenseId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (file: File) => expensesApi.uploadReceipt(expenseId, file),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: expenseKeys.all });
+      toast.success("Receipt saved");
+    },
+    onError: errorToast("Could not upload the receipt"),
+  });
+}
+
+export function useRemoveReceipt(expenseId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => expensesApi.removeReceipt(expenseId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: expenseKeys.all });
+      toast.success("Receipt removed");
+    },
+    onError: errorToast("Could not remove the receipt"),
+  });
+}

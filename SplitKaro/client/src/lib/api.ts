@@ -15,7 +15,11 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
     ...init,
     // Send the httpOnly auth cookie with every request.
     credentials: "include",
-    headers: { "Content-Type": "application/json", ...init?.headers },
+    // For FormData the browser sets the multipart Content-Type (with its boundary) itself.
+    headers: {
+      ...(init?.body instanceof FormData ? {} : { "Content-Type": "application/json" }),
+      ...init?.headers,
+    },
   });
 
   if (!res.ok) {
@@ -27,5 +31,9 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
     throw new ApiError(res.status, messages[0], messages);
   }
 
-  return res.status === 204 ? (undefined as T) : res.json();
+  if (res.status === 204) return undefined as T;
+
+  // Successful responses are wrapped as { success: true, data }.
+  const body = (await res.json()) as { success: true; data: T };
+  return body.data;
 }
