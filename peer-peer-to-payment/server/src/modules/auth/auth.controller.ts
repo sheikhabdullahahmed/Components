@@ -86,7 +86,7 @@ export class AuthController {
     try {
       const { token } = await this.authService.googleLogin(code);
       res.cookie(AUTH_COOKIE, token, { ...this.cookieOptions, maxAge: SEVEN_DAYS_MS });
-      res.redirect(this.clientUrl);
+      res.redirect(`${this.clientUrl}/dashboard`);
     } catch {
       res.redirect(failureUrl);
     }

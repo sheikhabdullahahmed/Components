@@ -33,7 +33,7 @@ export function GuestOnly({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    if (user) router.replace("/");
+    if (user) router.replace("/dashboard");
   }, [user, router]);
 
   if (isPending || user) return <FullPageSpinner />;

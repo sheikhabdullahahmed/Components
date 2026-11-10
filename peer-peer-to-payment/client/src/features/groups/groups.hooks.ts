@@ -84,7 +84,7 @@ function useExitGroup(id: string, mutationFn: () => Promise<void>, message: stri
   return useMutation({
     mutationFn,
     onSuccess: () => {
-      router.push("/");
+      router.push("/dashboard");
       queryClient.removeQueries({ queryKey: groupKeys.detail(id) });
       queryClient.invalidateQueries({ queryKey: groupKeys.all, exact: true });
       toast.success(message);

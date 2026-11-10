@@ -51,6 +51,7 @@ export function LoginForm() {
             name="password"
             autoComplete="current-password"
             required
+            placeholder="Enter your password"
             aria-invalid={passwordErrors.length > 0 || undefined}
           />
           <FieldError errors={passwordErrors} />

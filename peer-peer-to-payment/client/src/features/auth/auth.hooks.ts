@@ -21,7 +21,7 @@ function useOnAuthenticated() {
 
   return (user: AuthUser) => {
     queryClient.setQueryData(authKeys.me, user);
-    router.replace("/");
+    router.replace("/dashboard");
   };
 }
 

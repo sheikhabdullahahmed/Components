@@ -12,7 +12,7 @@ import { FriendsSidebarSection } from "@/features/friends/components/friends-sid
 import { GroupsSidebarSection } from "@/features/groups/components/groups-sidebar-section";
 import { cn } from "@/lib/utils";
 
-const NAV = [{ href: "/", label: "Dashboard", icon: LayoutDashboardIcon }];
+const NAV = [{ href: "/dashboard", label: "Dashboard", icon: LayoutDashboardIcon }];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const logout = useLogout();
@@ -23,7 +23,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {(user) => (
         <div className="flex flex-1 flex-col">
           <header className="flex items-center justify-between border-b px-4 py-3 sm:px-8">
-            <Link href="/" className="flex items-center gap-2 text-sm font-medium">
+            <Link href="/dashboard" className="flex items-center gap-2 text-sm font-medium">
               <ArrowLeftRightIcon className="size-4" />
               Peer to Peer Payment
             </Link>
