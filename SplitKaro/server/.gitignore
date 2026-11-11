@@ -6,3 +6,6 @@ coverage
 .env
 
 /src/generated/prisma
+
+# Claude Code local config
+.claude
