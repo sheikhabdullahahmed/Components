@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { MailService } from '../mail/mail.service.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
 
 const FRIEND_SELECT = { id: true, name: true, email: true } as const;
 
@@ -9,6 +10,7 @@ export class FriendsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly mail: MailService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   async list(userId: string) {
@@ -45,7 +47,15 @@ export class FriendsService {
     if (friend) {
       const { count } = await this.link(userId, friend.id);
       // Only email when the friendship is new, so re-adding doesn't spam them.
-      if (count > 0) void this.mail.sendFriendAdded(friend.email, adder);
+      if (count > 0) {
+        void this.mail.sendFriendAdded(friend.email, adder);
+        await this.notifications.notify({
+          actorId: userId,
+          recipientIds: [friend.id],
+          type: 'FRIEND_ADDED',
+          message: `${adder.name ?? adder.email} added you as a friend`,
+        });
+      }
       return { status: 'added' as const, friend };
     }
 

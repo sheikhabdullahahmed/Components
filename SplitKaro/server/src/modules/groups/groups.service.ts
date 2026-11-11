@@ -6,12 +6,16 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { CreateGroupDto } from './dto/create-group.dto.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
 
 const MEMBER_SELECT = { id: true, name: true, email: true } as const;
 
 @Injectable()
 export class GroupsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notifications: NotificationsService,
+  ) {}
 
   list(userId: string) {
     return this.prisma.group.findMany({
@@ -32,6 +36,7 @@ export class GroupsService {
         members: { create: [userId, ...others].map((id) => ({ userId: id })) },
       },
     });
+    await this.notifyAdded(userId, others, group.id, group.name);
     return this.findOne(userId, group.id);
   }
 
@@ -65,11 +70,26 @@ export class GroupsService {
     if (memberId === userId) throw new BadRequestException('You are already in this group');
     await this.assertFriends(userId, [memberId]);
 
-    await this.prisma.groupMember.createMany({
+    const { count } = await this.prisma.groupMember.createMany({
       data: [{ groupId, userId: memberId }],
       skipDuplicates: true,
     });
-    return this.findOne(userId, groupId);
+    const group = await this.findOne(userId, groupId);
+    // Only notify when they were actually added, not on a repeat add.
+    if (count > 0) await this.notifyAdded(userId, [memberId], groupId, group.name);
+    return group;
+  }
+
+  private async notifyAdded(actorId: string, recipientIds: string[], groupId: string, name: string) {
+    if (recipientIds.length === 0) return;
+    const actor = await this.notifications.displayName(actorId);
+    await this.notifications.notify({
+      actorId,
+      recipientIds,
+      type: 'GROUP_ADDED',
+      message: `${actor} added you to the group "${name}"`,
+      groupId,
+    });
   }
 
   // Members can remove anyone, including themselves (leaving). An empty group is deleted.

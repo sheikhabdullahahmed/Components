@@ -3,6 +3,7 @@ import { assertFriends, assertGroupMembers } from '../../common/access.js';
 import type { Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import type { UploadedImage } from '../storage/uploaded-file.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
 import { StorageService } from '../storage/storage.service.js';
 import { CreateCommentDto } from './dto/create-comment.dto.js';
 import { CreateExpenseDto } from './dto/create-expense.dto.js';
@@ -43,6 +44,7 @@ export class ExpensesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly storage: StorageService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   async create(userId: string, dto: CreateExpenseDto) {
@@ -64,7 +66,7 @@ export class ExpensesService {
     const amount = Math.round(dto.amount * 100);
     const shares = splitEqually(amount, participantIds.length);
 
-    return this.prisma.expense.create({
+    const expense = await this.prisma.expense.create({
       data: {
         description: dto.description.trim(),
         amount,
@@ -78,6 +80,17 @@ export class ExpensesService {
       },
       select: EXPENSE_SELECT,
     });
+
+    const actor = await this.notifications.displayName(userId);
+    await this.notifications.notify({
+      actorId: userId,
+      recipientIds: [...involved],
+      type: 'EXPENSE_ADDED',
+      message: `${actor} added "${expense.description}" (Rs ${amount / 100})`,
+      expenseId: expense.id,
+      groupId: dto.groupId,
+    });
+    return expense;
   }
 
   async list(userId: string, { groupId, friendId }: ListExpensesDto) {
@@ -108,9 +121,18 @@ export class ExpensesService {
   }
 
   async remove(userId: string, id: string) {
-    await this.findOne(userId, id);
+    const found = await this.findOne(userId, id);
     const expense = await this.prisma.expense.delete({ where: { id }, select: { receiptKey: true } });
     await this.deleteStoredFile(expense.receiptKey);
+
+    const actor = await this.notifications.displayName(userId);
+    await this.notifications.notify({
+      actorId: userId,
+      recipientIds: this.participantIds(found),
+      type: 'EXPENSE_DELETED',
+      message: `${actor} deleted "${found.description}"`,
+      groupId: found.group?.id,
+    });
   }
 
   async setReceipt(userId: string, id: string, file: UploadedImage | undefined) {
@@ -157,11 +179,28 @@ export class ExpensesService {
   }
 
   async addComment(userId: string, expenseId: string, dto: CreateCommentDto) {
-    await this.findOne(userId, expenseId);
-    return this.prisma.expenseComment.create({
+    const expense = await this.findOne(userId, expenseId);
+    const comment = await this.prisma.expenseComment.create({
       data: { expenseId, userId, body: dto.body.trim() },
       select: COMMENT_SELECT,
     });
+
+    // The expense's people, plus anyone who already commented on it.
+    const commenters = await this.prisma.expenseComment.findMany({
+      where: { expenseId },
+      select: { userId: true },
+      distinct: ['userId'],
+    });
+    const actor = await this.notifications.displayName(userId);
+    await this.notifications.notify({
+      actorId: userId,
+      recipientIds: [...this.participantIds(expense), ...commenters.map((c) => c.userId)],
+      type: 'EXPENSE_COMMENT',
+      message: `${actor} commented on "${expense.description}"`,
+      expenseId,
+      groupId: expense.group?.id,
+    });
+    return comment;
   }
 
   async removeComment(userId: string, expenseId: string, commentId: string) {
@@ -179,6 +218,11 @@ export class ExpensesService {
   private async deleteStoredFile(key: string | null) {
     if (!key) return;
     await this.storage.delete(key).catch(() => undefined);
+  }
+
+  // The payer and everyone the expense is split with.
+  private participantIds(expense: { paidBy: { id: string }; splits: { user: { id: string } }[] }) {
+    return [expense.paidBy.id, ...expense.splits.map((s) => s.user.id)];
   }
 
   private involves(userId: string): Prisma.ExpenseWhereInput {

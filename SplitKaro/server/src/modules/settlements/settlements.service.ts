@@ -4,6 +4,7 @@ import type { Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { ListExpensesDto } from '../expenses/dto/list-expenses.dto.js';
 import { CreateSettlementDto } from './dto/create-settlement.dto.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
 
 const USER_SELECT = { id: true, name: true, email: true } as const;
 
@@ -19,7 +20,10 @@ const SETTLEMENT_SELECT = {
 
 @Injectable()
 export class SettlementsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notifications: NotificationsService,
+  ) {}
 
   async create(userId: string, dto: CreateSettlementDto) {
     if (dto.payerId === dto.payeeId) {
@@ -36,7 +40,7 @@ export class SettlementsService {
       await assertFriends(this.prisma, userId, [otherId]);
     }
 
-    return this.prisma.settlement.create({
+    const settlement = await this.prisma.settlement.create({
       data: {
         amount: Math.round(dto.amount * 100),
         date: dto.date ?? new Date(),
@@ -47,6 +51,20 @@ export class SettlementsService {
       },
       select: SETTLEMENT_SELECT,
     });
+
+    const actor = await this.notifications.displayName(userId);
+    const rupees = settlement.amount / 100;
+    await this.notifications.notify({
+      actorId: userId,
+      recipientIds: [otherId],
+      type: 'SETTLEMENT_ADDED',
+      message:
+        dto.payerId === userId
+          ? `${actor} paid you Rs ${rupees}`
+          : `${actor} recorded receiving Rs ${rupees} from you`,
+      groupId: dto.groupId,
+    });
+    return settlement;
   }
 
   async list(userId: string, { groupId, friendId }: ListExpensesDto) {

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLogout } from "@/features/auth/auth.hooks";
 import { RequireAuth } from "@/features/auth/components/auth-guards";
+import { NotificationBell } from "@/features/notifications/components/notification-bell";
 import { AddFriendForm } from "@/features/friends/components/add-friend-form";
 import { FriendsSidebarSection } from "@/features/friends/components/friends-sidebar-section";
 import { GroupsSidebarSection } from "@/features/groups/components/groups-sidebar-section";
@@ -28,6 +29,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               SplitKaro
             </Link>
             <div className="flex items-center gap-2">
+              <NotificationBell />
               <span className="hidden text-sm text-muted-foreground sm:inline">
                 {user.name ?? user.email}
               </span>
