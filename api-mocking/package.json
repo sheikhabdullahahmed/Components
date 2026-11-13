@@ -1,0 +1,12 @@
+{
+  "name": "api-mocking",
+  "private": true,
+  "packageManager": "pnpm@11.22.0",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "dev": "pnpm -r --parallel dev",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint"
+  }
+}
